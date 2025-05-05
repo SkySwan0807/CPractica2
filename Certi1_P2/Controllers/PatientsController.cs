@@ -10,16 +10,15 @@ namespace Practica2.Controllers
 	[Route("patient")]
 	public class PatientsController : ControllerBase
 	{
-		private readonly PatientsManager _manager;
+		private readonly PatientsManager _manager = new PatientsManager();
 
-		public PatientsController(PatientsManager manager)
+		public PatientsController()
 		{
-			_manager = manager;
 		}
 
 		[HttpGet]
 		[Route("")]
-		public IEnumerable<Patients> GetAll()
+		public dynamic GetAll()
 		{
 			return _manager.GetAllPatients();
 		}

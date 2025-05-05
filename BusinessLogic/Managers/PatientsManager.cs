@@ -8,44 +8,46 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using DataBase.Managers;
+using System.Text.Json;
 
 namespace BusinessLogic.Managers
 {
 	public class PatientsManager
 	{
-		public List<Patients>? _patients;
-		private static int _nextId = 1011;
+		DataBaseService db = new DataBaseService();
+		List<Patients> _patients;
+		private static int _nextId;
 		private static readonly Random _random = new();
 
 		public PatientsManager()
 		{
-			if (_patients == null)
+			string json = db.ReadDB();
+
+			var options = new JsonSerializerOptions
 			{
-				_patients = new List<Patients>
+				PropertyNameCaseInsensitive = true
+			};
+
+			try
+			{
+				// Si comienza con [, asumimos que es una lista
+				if (json.TrimStart().StartsWith("["))
 				{
-					new Patients()
-					{
-						CI = $"{_nextId++}",
-						Name = "Juan",
-						LastName = "Perez",
-						BloodGroup = GetRandomBloodGroup()
-					},
-					new Patients()
-					{
-						CI = $"{_nextId++}",
-						Name = "Mateo",
-						LastName = "Alvarez",
-						BloodGroup = GetRandomBloodGroup()
-					},
-					new Patients()
-					{
-						CI = $"{_nextId++}",
-						Name = "Amir",
-						LastName = "Solano",
-						BloodGroup = GetRandomBloodGroup()
-					}
-				};
+					_patients = JsonSerializer.Deserialize<List<Patients>>(json, options) ?? new List<Patients>();
+				}
+				else
+				{
+					// Si es un solo objeto, lo envolvemos en una lista
+					var singlePatient = JsonSerializer.Deserialize<Patients>(json, options);
+					_patients = singlePatient != null ? new List<Patients> { singlePatient } : new List<Patients>();
+				}
 			}
+			catch
+			{
+				_patients = new List<Patients>(); // Si el JSON está malformado
+			}
+			_nextId = ObtenerCIMayor() + 1;
 		}
 
 		public string GetRandomBloodGroup()
@@ -55,10 +57,29 @@ namespace BusinessLogic.Managers
 
 		}
 
-		public List<Patients> GetAllPatients()
+		public int ObtenerCIMayor()
+		{
+			if (_patients == null || _patients.Count == 0)
+				return 1000;
+
+			return _patients
+				.Select(p => int.TryParse(p.CI, out var ciNum) ? ciNum : 0)
+				.Max();
+		}
+
+		public dynamic GetAllPatients()
 		{
 			Log.Information("Getting all patients");
-			return _patients;
+			if (_patients.Count == 0)
+			{
+				Log.Error("There're no patients registered yet");
+				return (object)"No patients registered";
+			}
+			else
+			{
+				Log.Information("Patients found successfully");
+				return _patients;
+			}
 		}
 
 		public dynamic GetById(string PatientId)
@@ -78,6 +99,7 @@ namespace BusinessLogic.Managers
 
 		public dynamic Add(string n, string a)
 		{
+
 			if (string.IsNullOrWhiteSpace(n) || string.IsNullOrWhiteSpace(a))
 			{
 				Log.Error("Name and LastName are required");
@@ -90,7 +112,11 @@ namespace BusinessLogic.Managers
 				LastName = a,
 				BloodGroup = GetRandomBloodGroup()
 			};
-			_patients.Add(patient);
+
+			var options = new JsonSerializerOptions { WriteIndented = true };
+			string json = JsonSerializer.Serialize(patient, options);
+			db.WriteDB(json);
+
 			Log.Information("Patient added successfully");
 			return patient;
 		}
@@ -107,6 +133,10 @@ namespace BusinessLogic.Managers
 			{
 				patient.Name = n;
 				patient.LastName = a;
+				var options = new JsonSerializerOptions { WriteIndented = true };
+				string json = JsonSerializer.Serialize(patient, options);
+				db.UpdateDB(ci, json);
+
 				Log.Information("Patient modified successfully");
 				return patient;
 			}
@@ -122,7 +152,8 @@ namespace BusinessLogic.Managers
 			}
 			else
 			{
-				_patients.Remove(patient);
+				db.DeleteDB(PatientId);
+
 				Log.Information("Patient deleted successfully");
 				return (object)$"Patient with id = {PatientId} has been deleted";
 			}
@@ -137,7 +168,7 @@ namespace BusinessLogic.Managers
 			id = id - 1000;
 			if (id > 13)
 			{
-				Log.Error("Patient didn't have a gift");
+				Log.Error("Patient didn't give a gift");
 				return (object)"No gift given";
 			} else
 			{

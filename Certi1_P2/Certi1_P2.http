@@ -1,0 +1,6 @@
+@Certi1_P2_HostAddress = http://localhost:5278
+
+GET {{Certi1_P2_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

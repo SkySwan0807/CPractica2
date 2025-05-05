@@ -1,4 +1,5 @@
 ﻿using Services.ExternalServices;
+using Services.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,10 +13,10 @@ namespace BusinessLogic.Managers
 
 		public GiftManager() { }
 
-		public List<Object> GetGiftList()
+		public List<Electronic> GetGiftList()
 		{
 			GiftSerrvice gs = new GiftSerrvice();
-			return gs.GetAllGifts();
+			return gs.GetAllGifts().Result;
 		}
 	}
 }

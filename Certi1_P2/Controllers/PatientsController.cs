@@ -1,6 +1,7 @@
 ﻿using BusinessLogic.Managers;
 using BusinessLogic.Models;
 using Microsoft.AspNetCore.Mvc;
+using Services.Models;
 using System.Text.Json;
 
 namespace Practica2.Controllers
@@ -55,6 +56,15 @@ namespace Practica2.Controllers
 		public dynamic DeleteById(string PatientId)
 		{
 			return _manager.Delete(PatientId);
+		}
+
+		[HttpPost]
+		[Route("collect-gift")]
+		public Electronic CollectGift([FromBody]Patients PatientId)
+		{
+			Electronic gift = _manager.CollectGiftForPatient(PatientId);
+			
+			return gift;
 		}
 	}
 	

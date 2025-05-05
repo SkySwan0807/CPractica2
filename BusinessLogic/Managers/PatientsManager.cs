@@ -1,4 +1,5 @@
 ﻿using BusinessLogic.Models;
+using Services.Models;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -109,6 +110,19 @@ namespace BusinessLogic.Managers
 				return (object)$"Patient with id = {PatientId} has been deleted";
 			}
 		}
+
+		public Electronic CollectGiftForPatient(Patients patients)
+		{
+			var collectedGift = new Electronic();
+			if (patients.CI == "1001")
+			{
+				GiftManager gm = new GiftManager();
+				List<Electronic> _giftList = gm.GetGiftList();
+				collectedGift = _giftList[0];
+			}
+			return collectedGift;
+		}
+
 	}
 	public enum BloodGroup
 	{

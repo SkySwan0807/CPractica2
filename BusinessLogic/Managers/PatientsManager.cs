@@ -1,4 +1,5 @@
 ﻿using BusinessLogic.Models;
+using Serilog;
 using Services.Models;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ namespace BusinessLogic.Managers
 	public class PatientsManager
 	{
 		public List<Patients>? _patients;
-		private static int _nextId = 1000;
+		private static int _nextId = 1011;
 		private static readonly Random _random = new();
 
 		public PatientsManager()
@@ -56,19 +57,30 @@ namespace BusinessLogic.Managers
 
 		public List<Patients> GetAllPatients()
 		{
+			Log.Information("Getting all patients");
 			return _patients;
 		}
 
 		public dynamic GetById(string PatientId)
 		{
 			var patient = _patients.FirstOrDefault(p => p.CI == PatientId);
-			return patient ?? (object)"Patient not found";
+			if (patient == null)
+			{
+				Log.Error("Patient couldn't be found");
+				return (object)"Patient not found";
+			} else 
+			{
+				Log.Information("Patient found successfully");
+				return patient;
+			}
+			
 		}
 
 		public dynamic Add(string n, string a)
 		{
 			if (string.IsNullOrWhiteSpace(n) || string.IsNullOrWhiteSpace(a))
 			{
+				Log.Error("Name and LastName are required");
 				return "Name and LastName are required";
 			}
 			var patient = new Patients()
@@ -79,6 +91,7 @@ namespace BusinessLogic.Managers
 				BloodGroup = GetRandomBloodGroup()
 			};
 			_patients.Add(patient);
+			Log.Information("Patient added successfully");
 			return patient;
 		}
 
@@ -87,12 +100,14 @@ namespace BusinessLogic.Managers
 			var patient = _patients.FirstOrDefault(p => p.CI == ci);
 			if (patient == null)
 			{
+				Log.Error("Patient couldn't be updated");
 				return (object)"Patient not found";
 			}
 			else
 			{
 				patient.Name = n;
 				patient.LastName = a;
+				Log.Information("Patient modified successfully");
 				return patient;
 			}
 		}
@@ -102,25 +117,34 @@ namespace BusinessLogic.Managers
 			var patient = _patients.FirstOrDefault(p => p.CI == PatientId);
 			if (patient == null)
 			{
+				Log.Error("Patient couldn't be deleted");
 				return (object)"Patient not found";
 			}
 			else
 			{
 				_patients.Remove(patient);
+				Log.Information("Patient deleted successfully");
 				return (object)$"Patient with id = {PatientId} has been deleted";
 			}
 		}
 
-		public Electronic CollectGiftForPatient(Patients patients)
+		public dynamic CollectGiftForPatient(Patients patients)
 		{
 			var collectedGift = new Electronic();
-			if (patients.CI == "1001")
+			GiftManager gm = new GiftManager();
+			List<Electronic> _giftList = gm.GetGiftList();
+			int id = int.Parse(patients.CI);
+			id = id - 1000;
+			if (id > 13)
 			{
-				GiftManager gm = new GiftManager();
-				List<Electronic> _giftList = gm.GetGiftList();
-				collectedGift = _giftList[0];
-			}
-			return collectedGift;
+				Log.Error("Patient didn't have a gift");
+				return (object)"No gift given";
+			} else
+			{
+				collectedGift = _giftList[(id-1)];
+				Log.Information("Gift recived successfully");
+				return collectedGift;
+			};
 		}
 
 	}

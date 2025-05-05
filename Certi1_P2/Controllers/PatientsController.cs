@@ -60,9 +60,9 @@ namespace Practica2.Controllers
 
 		[HttpPost]
 		[Route("collect-gift")]
-		public Electronic CollectGift([FromBody]Patients PatientId)
+		public dynamic CollectGift([FromBody]Patients PatientId)
 		{
-			Electronic gift = _manager.CollectGiftForPatient(PatientId);
+			var gift = _manager.CollectGiftForPatient(PatientId);
 			
 			return gift;
 		}
